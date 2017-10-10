@@ -1,7 +1,7 @@
 # PyGenRetrieve
 This is a very simple software for retreiving data from **NCBI GTR** (Genetic Testing Registry).
 
-The program receives a search string, *"breast cancer"* or *"epilepsy"*, the number of pages in NCBI GTR (sorry for this, for now it has to be an input parameter), and finally an output name for saving. Using these values, the program opens every page in this querry, and saves a text file with all the genes related to the searched condition.
+The program receives a search string, *"breast cancer"* or *"epilepsy"*, the number of pages in NCBI GTR, and finally an output name for saving. Using these values, the program opens every page in this querry, and saves a text file with all the genes related to the searched condition.
 
 In order to the app to work, you must install some extra libraries. For **Ubuntu/Debian** based systems, run:
 
@@ -19,4 +19,6 @@ Thanks, for downloading! Any feedbacks and/or forks are welcome.
 
 ---
 
-**Windows users**: as long as libraries are installed, any Windows OS + Python3.x shoul run the appt without problems, however, since I don't use Windows, I can not write any tips or tutorials showing how doing it.
+**Windows users**: as long as libraries are installed, any Windows OS + Python3.x shoul run the appt without problems, however, since I don't use Windows, I can't write any tips or tutorials showing how doing it.
+
+**Extra note about number of pages**: You could - *sort of* - bypass the need for entering the number of pages. Just enter a large number in this field, since the program won't load repeated pages.
