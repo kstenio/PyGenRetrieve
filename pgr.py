@@ -74,10 +74,12 @@ class PGR_GUI(QtGui.QMainWindow, interface):
 		while (i < self.pages and self.running == True):
 			try:
 				TempDataFrame = pandas.read_html('https://www.ncbi.nlm.nih.gov/gtr/all/genes/?term=%s&page=%d' %(self.word.replace(' ','+'),i+1))
-				out = out.append(TempDataFrame[0].iloc[:, 1].map(lambda x: x.replace('Tests', '').replace('Test', '')))
+				TempDataFrame2 = TempDataFrame[0].iloc[:, 1].map(lambda x: x.replace('Tests', '').replace('Test', ''))
+				out = out.append(TempDataFrame2)
 				self.progressbar.setValue(i + 1)
 				QtGui.QApplication.processEvents()
 				i += 1
+				if len(TempDataFrame2) < 20: break
 			except ValueError:
 				QtGui.QMessageBox.question(self, 'Failed!', 'No genes found.', QtGui.QMessageBox.Ok)
 				self.running = False
