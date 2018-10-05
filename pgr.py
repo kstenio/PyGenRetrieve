@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+about = '<html><body><h3><center>PyGenRetrieve (version 1.1)</center></h3><p>This is a very simple software for retreiving data from <b>NCBI GTR</b> (Genetic Testing Registry)</p><p>This app uses the libraries: <b><i>pandas, pyqt4, bs4</i></b></p><p>Use is free according to GPL V2.0 or superior.</p><p>Developed by: <a href="mailto:kleydson.stenio@gmail.com?Subject=PyGenRetrieve" target="_top">Kleydson Stenio</a></p></body></html>'
 #  pgr.py
 #
 #  Copyright 2017 Kleydson Stenio <kleydson.stenio@gmail.com>
@@ -43,7 +44,6 @@ class PGR_GUI(QtGui.QMainWindow, interface):
 		# load all data from GUI
 		QtGui.QMainWindow.__init__(self, parent)
 		self.setupUi(self)
-		self.progressbar.setVisible(False)
 		
 		# variables
 		self.word, self.out, self.pages = '', '', 0
@@ -51,55 +51,58 @@ class PGR_GUI(QtGui.QMainWindow, interface):
 		
 		# connects
 		self.word_le.textChanged.connect(self.setWord)
-		self.out_le.textChanged.connect(self.setOut)
-		self.pages_sb.valueChanged.connect(self.setPages)
 		self.start_pb.clicked.connect(self.startRetrieve)
 		self.stop_pb.clicked.connect(lambda : self.start_stop(False))
+		self.actionAbout.triggered.connect(self.about)
 	
 	# methods
 	def setWord(self,text):
-		self.word = text
+		out = text.replace(' ','_')+'.txt'
+		self.out_le.setText(out)
+		self.word, self.out = text, out
 	
-	def setOut(self,text):
-		self.out = text
+	def about(self):
+		QtGui.QMessageBox.about(self, 'About', about)
 	
-	def setPages(self,num):
-		self.progressbar.setValue(0)
-		self.pages = num
-		self.progressbar.setRange(0, num)
-	
+	# start retrieving
 	def startRetrieve(self):
 		self.start_stop(True)
-		i, out = 0, pandas.Series(dtype=str)
-		while (i < self.pages and self.running == True):
-			try:
-				TempDataFrame = pandas.read_html('https://www.ncbi.nlm.nih.gov/gtr/all/genes/?term=%s&page=%d' %(self.word.replace(' ','+'),i+1))
-				TempDataFrame2 = TempDataFrame[0].iloc[:, 1].map(lambda x: x.replace('Tests', '').replace('Test', ''))
-				out = out.append(TempDataFrame2)
-				self.progressbar.setValue(i + 1)
-				QtGui.QApplication.processEvents()
-				i += 1
-				if len(TempDataFrame2) < 20: break
-			except ValueError:
-				QtGui.QMessageBox.question(self, 'Failed!', 'No genes found.', QtGui.QMessageBox.Ok)
-				self.running = False
+		out = pandas.Series(dtype=str)
+		do, i = True, 0
+		if self.word:
+			while (do and self.running):
+				try:
+					TempDataFrame = pandas.read_html('https://www.ncbi.nlm.nih.gov/gtr/all/genes/?term=%s&page=%d' %(self.word.replace(' ','+'),i+1))
+					TempDataFrame2 = TempDataFrame[0].iloc[:, 1].map(lambda x: x.replace('Tests', '').replace('Test', ''))
+					out = out.append(TempDataFrame2)
+					self.genes_lb.setText('%i' %len(out)); QtGui.QApplication.processEvents()
+					i += 1
+					if len(TempDataFrame2) < 20: do = False
+				except (ValueError,ConnectionRefusedError) as err:
+					if type(err) == ValueError:
+						QtGui.QMessageBox.critical(self, 'Failed!', 'No genes found.')
+					elif type(err) == ConnectionRefusedError:
+						QtGui.QMessageBox.critical(self, 'Failed!', 'Connection error.\nTry again in a few moments.')
+					self.running = False
+		else:
+			QtGui.QMessageBox.critical(self, 'Failed!', 'Write a disease before running.')
+			self.running = False
 		if self.running:
-			out.to_csv(self.out + '.txt', index=False)
-			QtGui.QMessageBox.question(self, 'Success!', 'All genes retrieved.', QtGui.QMessageBox.Ok)
+			out.to_csv(self.out, index=False)
+			QtGui.QMessageBox.information(self, 'Success!', 'All genes retrieved.\nFile "%s" saved.' %self.out)
 		self.start_stop(False)
 	
 	def start_stop(self,val):
-		self.progressbar.setVisible(val)
 		self.stop_pb.setEnabled(val)
 		self.start_pb.setEnabled(not val)
 		self.running = val
 		self.stop_pb.setStyleSheet('background-color:#bf4040; color:#ffffff;')
+		self.genes_lb.setText('0')
 		QtGui.QApplication.processEvents()
 		QtGui.QApplication.processEvents()
 		if not val:
-			self.progressbar.setValue(0)
 			self.stop_pb.setStyleSheet('')
-		
+	
 # ################# #
 # start application #
 # ################# #
