@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-about = '<html><body><h3><center>PyGenRetrieve (version 1.1)</center></h3><p>This is a very simple software for retreiving data from <b>NCBI GTR</b> (Genetic Testing Registry)</p><p>This app uses the libraries: <b><i>pandas, pyqt4, bs4</i></b></p><p>Use is free according to GPL V2.0 or superior.</p><p>Developed by: <a href="mailto:kleydson.stenio@gmail.com?Subject=PyGenRetrieve" target="_top">Kleydson Stenio</a></p></body></html>'
+about = '<html><body><h3><center>PyGenRetrieve (version 1.2)</center></h3><p>This is a very simple software for retreiving data from <b>NCBI GTR</b> (Genetic Testing Registry)</p><p>This app uses the libraries: <b><i>pandas, pyqt5, bs4 and ssl</i></b></p><p>Use is free according to GPL V2.0 or superior.</p><p>Developed by: <a href="mailto:kleydson.stenio@gmail.com?Subject=PyGenRetrieve_V1.2" target="_top">Kleydson Stenio</a> @ 2018</p></body></html>'
 #  pgr.py
 #
 #  Copyright 2017 Kleydson Stenio <kleydson.stenio@gmail.com>
@@ -27,22 +27,23 @@ about = '<html><body><h3><center>PyGenRetrieve (version 1.1)</center></h3><p>Thi
 # ####### #
 # imports #
 # ####### #
-import pandas, sys
-from PyQt4 import QtCore, QtGui, uic
+import pandas, sys, ssl
+from PyQt5 import QtWidgets, uic
+from pathlib import Path
 
 # ############# #
 # importing GUI #
 # ############# #
-interface = uic.loadUiType('./pgr.ui')[0]
+interface = uic.loadUiType(str(Path.cwd().joinpath('pgr.ui')))[0]
 
 # ######### #
 # app class #
 # ######### #
-class PGR_GUI(QtGui.QMainWindow, interface):
+class PGR_GUI(QtWidgets.QMainWindow, interface):
 	# inicializa a classe/programa
 	def __init__(self, parent=None):
 		# load all data from GUI
-		QtGui.QMainWindow.__init__(self, parent)
+		QtWidgets.QMainWindow.__init__(self, parent)
 		self.setupUi(self)
 		
 		# variables
@@ -51,6 +52,7 @@ class PGR_GUI(QtGui.QMainWindow, interface):
 		
 		# connects
 		self.word_le.textChanged.connect(self.setWord)
+		self.word_le.returnPressed.connect(self.startRetrieve)
 		self.start_pb.clicked.connect(self.startRetrieve)
 		self.stop_pb.clicked.connect(lambda : self.start_stop(False))
 		self.actionAbout.triggered.connect(self.about)
@@ -59,10 +61,10 @@ class PGR_GUI(QtGui.QMainWindow, interface):
 	def setWord(self,text):
 		out = text.replace(' ','_')+'.txt'
 		self.out_le.setText(out)
-		self.word, self.out = text, out
+		self.word, self.out = text, Path.cwd().joinpath(out)
 	
 	def about(self):
-		QtGui.QMessageBox.about(self, 'About', about)
+		QtWidgets.QMessageBox.about(self, 'About', about)
 	
 	# start retrieving
 	def startRetrieve(self):
@@ -75,21 +77,23 @@ class PGR_GUI(QtGui.QMainWindow, interface):
 					TempDataFrame = pandas.read_html('https://www.ncbi.nlm.nih.gov/gtr/all/genes/?term=%s&page=%d' %(self.word.replace(' ','+'),i+1))
 					TempDataFrame2 = TempDataFrame[0].iloc[:, 1].map(lambda x: x.replace('Tests', '').replace('Test', ''))
 					out = out.append(TempDataFrame2)
-					self.genes_lb.setText('%i' %len(out)); QtGui.QApplication.processEvents()
+					self.genes_lb.setText('%i' %len(out)); QtWidgets.QApplication.processEvents()
 					i += 1
 					if len(TempDataFrame2) < 20: do = False
-				except (ValueError,ConnectionRefusedError) as err:
+				except Exception as err:
 					if type(err) == ValueError:
-						QtGui.QMessageBox.critical(self, 'Failed!', 'No genes found.')
+						QtWidgets.QMessageBox.critical(self, 'Failed!', 'No genes found.')
 					elif type(err) == ConnectionRefusedError:
-						QtGui.QMessageBox.critical(self, 'Failed!', 'Connection error.\nTry again in a few moments.')
+						QtWidgets.QMessageBox.critical(self, 'Failed!', 'Connection error.\nTry again in a few moments.')
+					elif type(err) == urllib.error.HTTPError:
+						QtWidgets.QMessageBox.critical(self, 'Failed!', 'Bad gateway error.\nTry again in a few moments.')
 					self.running = False
 		else:
-			QtGui.QMessageBox.critical(self, 'Failed!', 'Write a disease before running.')
+			QtWidgets.QMessageBox.critical(self, 'Failed!', 'Write a disease before running.')
 			self.running = False
 		if self.running:
 			out.to_csv(self.out, index=False)
-			QtGui.QMessageBox.information(self, 'Success!', 'All genes retrieved.\nFile "%s" saved.' %self.out)
+			QtWidgets.QMessageBox.information(self, 'Success!', '<html>All genes retrieved.\nFile <a href=%s>%s</a> saved.</html>' %(self.out.as_uri(), self.out.name) )
 		self.start_stop(False)
 	
 	def start_stop(self,val):
@@ -98,8 +102,8 @@ class PGR_GUI(QtGui.QMainWindow, interface):
 		self.running = val
 		self.stop_pb.setStyleSheet('background-color:#bf4040; color:#ffffff;')
 		self.genes_lb.setText('0')
-		QtGui.QApplication.processEvents()
-		QtGui.QApplication.processEvents()
+		QtWidgets.QApplication.processEvents()
+		QtWidgets.QApplication.processEvents()
 		if not val:
 			self.stop_pb.setStyleSheet('')
 	
@@ -107,7 +111,7 @@ class PGR_GUI(QtGui.QMainWindow, interface):
 # start application #
 # ################# #
 
-application = QtGui.QApplication(sys.argv)
+application = QtWidgets.QApplication(sys.argv)
 Window = PGR_GUI(None)
 Window.show()
 application.exec_()
