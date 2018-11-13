@@ -5,7 +5,7 @@ The program receives a search string, *"breast cancer"* or *"epilepsy"* and an o
 
 In order to the app work properly, you must install some extra libraries. For **Ubuntu/Debian** based systems, run:
 
-**`apt install python3-pandas python3-html5lib python3-bs4 python3-pyqt5`**
+**`apt install python3-pandas python3-html5lib python3-bs4 python3-pyqt5 python3-lxml`**
 
 It would also be recommended to enable execute bit for the py file:
 
