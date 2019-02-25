@@ -27,7 +27,7 @@ about = '<html><body><h3><center>PyGenRetrieve (version 1.2)</center></h3><p>Thi
 # ####### #
 # imports #
 # ####### #
-import pandas, sys, ssl
+import pandas, sys, ssl, lxml
 from PyQt5 import QtWidgets, uic
 from pathlib import Path
 
